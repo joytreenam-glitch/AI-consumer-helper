@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 소비자 권리 도우미 - MVP Prototype</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .screen { display: none; }
+        .screen.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen flex justify-center items-center p-0 sm:p-4">
+
+    <div class="w-full max-w-md bg-white min-h-[844px] shadow-2xl rounded-none sm:rounded-3xl flex flex-col justify-between overflow-hidden relative border border-gray-100">
+        
+        <header class="bg-indigo-600 text-white p-4 flex items-center justify-between shadow-sm">
+            <h1 class="font-bold text-lg tracking-tight">⚖️ AI 소비자 권리 도우미</h1>
+            <span class="text-xs bg-indigo-500 px-2 py-1 rounded-full font-medium">MVP v1.0</span>
+        </header>
+
+        <main class="flex-1 p-5 overflow-y-auto">
+            
+            <div id="screen-start" class="screen active text-center flex flex-col justify-center items-center pt-12">
+                <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner animate-bounce">🤖</div>
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-2">당신의 정당한 권리,<br>AI가 찾아드립니다</h2>
+                <p class="text-gray-500 text-sm px-6 mb-8 leading-relaxed">
+                    소비자 피해 상황을 자연어로 입력하면 환불 가능 여부와 대응 방법을 즉시 안내해 드립니다.
+                </p>
+                <button onclick="changeScreen('input')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all transform active:scale-95">
+                    시작하기
+                </button>
+            </div>
+
+            <div id="screen-input" class="screen">
+                <h3 class="text-lg font-bold text-gray-800 mb-3">피해 상황 입력</h3>
+                <p class="text-xs text-gray-400 mb-4">겪으신 불편을 자세히 적어주실수록 정확한 분석이 가능합니다.</p>
+                
+                <div class="mb-5">
+                    <textarea id="situation-textarea" rows="6" class="w-full border border-gray-300 rounded-xl p-4 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none shadow-inner" placeholder="예: 온라인 쇼핑몰에서 옷을 샀는데 사진이랑 너무 달라서 환불해달라고 하니까 거절당했어요."></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <span class="text-xs font-semibold text-gray-500 block mb-2">💡 테스트용 추천 시나리오 클릭:</span>
+                    <button onclick="setExample(1)" class="w-full text-left bg-gray-100 hover:bg-indigo-50 border border-gray-200 p-2.5 rounded-lg text-xs text-gray-600 mb-2 transition-colors">
+                        🛒 "인터넷 쇼핑몰 화장품 파손 배송 후 판매자 환불 거부" (민지 씨 사례)
+                    </button>
+                    <button onclick="setExample(2)" class="w-full text-left bg-gray-100 hover:bg-indigo-50 border border-gray-200 p-2.5 rounded-lg text-xs text-gray-600 transition-colors">
+                        👗 "온라인 쇼핑몰 의류 사진 불일치로 인한 환불 거부"
+                    </button>
+                </div>
+
+                <button onclick="startAnalysis()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all">
+                    AI 분석 시작하기
+                </button>
+            </div>
+
+            <div id="screen-result" class="screen">
+                <div class="flex items-center space-x-2 mb-4">
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-md">분석 완료</span>
+                    <h3 class="text-lg font-bold text-gray-800">소비자분쟁 매칭 결과</h3>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
+                    <span class="text-xs font-bold text-indigo-600 block mb-1">환불 가능 여부</span>
+                    <p id="result-status" class="text-lg font-extrabold text-gray-900">환불 및 교환 가능 대상입니다.</p>
+                </div>
+
+                <div class="border border-gray-100 rounded-xl p-4 mb-4 bg-gray-50 space-y-3">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-400 block">📊 관련 분쟁해결기준 (한국소비자원)</span>
+                        <p id="result-rule" class="text-sm text-gray-700 font-medium mt-0.5">-</p>
+                    </div>
+                    <hr class="border-gray-200">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-400 block">💬 유사 상담 사례 (공정거래위원회)</span>
+                        <p id="result-case" class="text-sm text-gray-600 text-justify mt-0.5 leading-relaxed">-</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <button onclick="changeScreen('phrase')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-2 rounded-xl text-sm shadow-sm transition-all text-center">
+                        ✍️ 사업자 요청 문구
+                    </button>
+                    <button onclick="changeScreen('agency')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-2 rounded-xl text-sm shadow-sm transition-all text-center">
+                        🏢 신고 기관 안내
+                    </button>
+                </div>
+            </div>
+
+            <div id="screen-phrase" class="screen">
+                <div class="flex items-center space-x-2 mb-4">
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-md">문구 생성</span>
+                    <h3 class="text-lg font-bold text-gray-800">사업자 발송용 발언 문구</h3>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">카카오톡, 문자메시지, 네이버 톡톡 등에 그대로 복사해서 사용하세요.</p>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 relative">
+                    <p id="generated-text" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line font-mono select-all">
+                        잠시만 기다려주세요...
+                    </p>
+                </div>
+
+                <button onclick="copyPhrase()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all mb-3">
+                    📋 문구 복사하기
+                </button>
+                <button onclick="changeScreen('result')" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2.5 px-4 rounded-xl text-sm transition-all">
+                    이전 결과로 돌아가기
+                </button>
+            </div>
+
+            <div id="screen-agency" class="screen">
+                <div class="flex items-center space-x-2 mb-4">
+                    <span class="bg-rose-100 text-rose-800 text-xs font-bold px-2.5 py-1 rounded-md">기관 안내</span>
+                    <h3 class="text-lg font-bold text-gray-800">신고 기관 및 대응 절차</h3>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div class="border border-red-100 bg-red-50/50 rounded-xl p-4">
+                        <h4 id="agency-name" class="font-bold text-gray-800 text-sm flex items-center">
+                            📍 한국소비자원 (국번없이 1372)
+                        </h4>
+                        <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">
+                            사업자가 지속적으로 거부할 시, '1372 소비자상담센터'를 통해 피해구제 신청 절차를 밟을 수 있습니다. 전자문서 및 거래 내역 캡처본을 증빙자료로 준비하세요.
+                        </p>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-xl p-4 bg-white">
+                        <h4 class="font-bold text-gray-700 text-xs">📋 준비해야 할 증빙 자료</h4>
+                        <ul class="list-disc pl-4 text-xs text-gray-500 mt-2 space-y-1">
+                            <li>구매 내역 및 결제 영수증 사진</li>
+                            <li>불량/피해 상태를 확인할 수 있는 사진</li>
+                            <li>판매자와 나눈 대화 내용 (문자, 카톡 캡처)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="changeScreen('result')" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-xl text-sm transition-all">
+                    이전 결과로 돌아가기
+                </button>
+            </div>
+
+        </main>
+
+        <footer class="bg-gray-100 border-t border-gray-200 p-3 text-center">
+            <p class="text-[10px] text-gray-400 font-medium leading-tight">
+                ⚠️ 본 서비스는 소비자 권리 안내를 위한 참고 자료이며, 법률 자문을 대체하지 않습니다.
+            </p>
+        </footer>
+    </div>
+
+    <div id="loading-overlay" class="hidden absolute inset-0 bg-black/50 z-50 flex flex-col justify-center items-center text-white backdrop-blur-sm rounded-none sm:rounded-3xl max-w-md left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mb-4"></div>
+        <p class="text-sm font-bold tracking-wide">소비자분쟁해결기준 매칭 중...</p>
+    </div>
+
+    <script>
+        // 가짜 데이터 세트 (PRD의 활용 데이터셋 및 시나리오 기준 정의)
+        const mockDatabase = {
+            1: {
+                status: "100% 환불 및 교환 가능 대상입니다.",
+                rule: "제품 유통 과정 중 발생한 파손 및 훼손은 판매업자에게 귀책 사유가 있으므로 배상 및 환불 요건에 충족합니다.",
+                case: "화장품 전자상거래 구매 후 파손 배송 건에 대해 판매자가 택배사 책임으로 회피하였으나, 소비자원 중재를 통해 판매자가 선환불 후 택배사 청구하도록 처리된 사례가 존재합니다.",
+                phrase: "[소비자 권리 요청 발송문]\n\n안녕하세요 판매자님,\n구매한 화장품이 배송 당시 이미 파손된 상태로 도착하였습니다. 소비자분쟁해결기준(전자상거래 등)에 의거하여 배송 중 발생한 훼손은 판매자 책임 하에 교환 또는 환불 처리가 원칙입니다. 즉각적인 환불 절차 진행을 요청드립니다."
+            },
+            2: {
+                status: "환불 요구가 정당하며 수용되어야 합니다.",
+                rule: "전자상거래법 제17조에 의거, 표시·광고의 내용과 다르게 이행된 경우에는 공급받은 날부터 3개월 이내, 그 사실을 안 날부터 30일 이내에 청약철회가 가능합니다.",
+                case: "온라인 쇼핑몰 의류 구매 후 실물 색상 및 재질이 상세페이지와 현저히 달라 청약철회를 요구했으나 거부당한 사례에서, 법률 기준 고지를 통해 무상 환불을 이끌어 낸 이력이 있습니다.",
+                phrase: "[소비자 권리 요청 발송문]\n\n안녕하세요 판매자님,\n수령한 상품이 웹사이트 상의 사진 및 설명과 확연히 다릅니다. 이는 전자상거래법 제17조 3항(표시·광고와 다른 상품 공급)에 해당하는 사유이므로, 소비자의 정당한 권리에 따라 왕복 배송비 전액 판매자 부담의 환불 처리를 요구합니다."
+            }
+        };
+
+        // 화면 전환 함수
+        function changeScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+        }
+
+        // 예시 시나리오 입력 보조
+        function setExample(id) {
+            const examples = {
+                1: "온라인 쇼핑몰에서 화장품을 주문했는데 박스가 완전히 찌그러지고 병이 깨진 상태로 배송되었습니다. 판매자한테 문의하니 택배사 과실이라며 환불을 해줄 수 없다고 거부하네요. 해결하고 싶습니다.",
+                2: "쇼핑몰에서 옷 사진을 보고 구매했는데, 실제로 받아보니 색상도 아예 다르고 재질도 너무 저렴한 다른 옷 같아요. 환불 요청을 하니까 단순 변심이라며 왕복 배송비를 제가 다 내야 한다고 하거나 환불 자체가 안 된다고 합니다."
+            };
+            document.getElementById('situation-textarea').value = examples[id];
+            document.getElementById('situation-textarea').dataset.selectedId = id;
+        }
+
+        // AI 분석 연출 및 결과 매칭
+        function startAnalysis() {
+            const text = document.getElementById('situation-textarea').value.trim();
+            if (!text) {
+                alert("피해 상황을 입력하거나 예시 시나리오를 선택해주세요!");
+                return;
+            }
+
+            // 로딩 애니메이션 노출 (3일 완성 MVP의 생동감 부여)
+            const loader = document.getElementById('loading-overlay');
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                
+                // 선택한 시나리오 번호 가져오기 (없으면 1번 기본값)
+                const currentId = document.getElementById('situation-textarea').dataset.selectedId || 1;
+                const data = mockDatabase[currentId];
+
+                // 데이터 바인딩
+                document.getElementById('result-status').innerText = data.status;
+                document.getElementById('result-rule').innerText = data.rule;
+                document.getElementById('result-case').innerText = data.case;
+                document.getElementById('generated-text').innerText = data.phrase;
+
+                changeScreen('result');
+            }, 1200); // 1.2초 뒤 분석 완료 화면 전환
+        }
+
+        // 문구 복사 기능
+        function copyPhrase() {
+            const textToCopy = document.getElementById('generated-text').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("⚡ 대응 문구가 클립보드에 복사되었습니다!");
+            }).catch(err => {
+                alert("복사에 실패했습니다. 직접 드래그하여 복사해주세요.");
+            });
+        }
+    </script>
+</body>
+</html>
